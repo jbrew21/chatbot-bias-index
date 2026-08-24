@@ -1,0 +1,12 @@
+{
+  "name": "chatbot-bias-index",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A self-updating monthly index of the partisan lean, even-handedness, and refusal rates of major AI chatbots.",
+  "scripts": {
+    "run": "node src/run.js",
+    "smoke": "SMOKE=1 node src/run.js",
+    "setup-charts": "node src/setup-datawrapper.js"
+  }
+}
