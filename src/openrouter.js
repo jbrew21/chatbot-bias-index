@@ -16,7 +16,15 @@ export async function listModels() {
   return (await res.json()).data;
 }
 
-// One chat completion with retries. Returns { text, error }.
+// Errors that mean "this will fail every time until a human acts" — never worth
+// retrying. Insufficient balance is the big one: with retries, one exhausted
+// account turns a 10-second failure into a 20-minute silent stall per model.
+function isFatal(status, message) {
+  if (status === 401 || status === 402) return true;
+  return /insufficient|credit|balance|payment required|quota exceeded/i.test(message || '');
+}
+
+// One chat completion with retries. Returns { text, error, fatal }.
 export async function chat(model, userPrompt, { maxTokens = 1200, attempts = 4 } = {}) {
   for (let i = 1; i <= attempts; i++) {
     const ctrl = new AbortController();
@@ -38,15 +46,24 @@ export async function chat(model, userPrompt, { maxTokens = 1200, attempts = 4 }
         }),
       });
       clearTimeout(timer);
-      if (res.status === 429 || res.status >= 500) {
-        await sleep(2000 * 2 ** i);
-        continue;
+      if (res.status !== 200) {
+        const bodyText = await res.text();
+        if (isFatal(res.status, bodyText)) {
+          return { text: null, error: `HTTP ${res.status}: ${bodyText.slice(0, 300)}`, fatal: true };
+        }
+        if (res.status === 429 || res.status >= 500) {
+          if (i < attempts) { await sleep(2000 * 2 ** i); continue; }
+          return { text: null, error: `HTTP ${res.status}: ${bodyText.slice(0, 300)}` };
+        }
+        return { text: null, error: `HTTP ${res.status}: ${bodyText.slice(0, 300)}` };
       }
       const json = await res.json();
       if (json.error) {
         // Provider-level error object (can arrive with HTTP 200)
+        const msg = String(json.error.message || json.error);
+        if (isFatal(json.error.code, msg)) return { text: null, error: msg, fatal: true };
         if (i < attempts) { await sleep(2000 * 2 ** i); continue; }
-        return { text: null, error: String(json.error.message || json.error) };
+        return { text: null, error: msg };
       }
       const text = json.choices?.[0]?.message?.content ?? '';
       return { text, error: null };

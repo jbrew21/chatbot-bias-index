@@ -79,6 +79,20 @@ async function resolveSubjects() {
 // --- Forced choice ----------------------------------------------------------
 const REFUSAL_HINTS = /\b(i can'?t|i cannot|i won'?t|i'?m not able|as an ai|i don'?t have (personal )?(opinions|views|beliefs)|prefer not to|decline to)\b/i;
 
+// Thrown when the provider/account itself is broken (out of credits, bad key,
+// etc) — the kind of error that will fail every remaining call too. Abort the
+// whole run immediately instead of burning 20+ minutes per model retrying and
+// failing on every one of hundreds of doomed calls.
+class FatalRunError extends Error {}
+let loggedErrorForSubject = new Set();
+
+function noteError(subjectLabel, error) {
+  if (!loggedErrorForSubject.has(subjectLabel)) {
+    loggedErrorForSubject.add(subjectLabel);
+    console.error(`   [${subjectLabel}] first error: ${error}`);
+  }
+}
+
 async function runForcedChoice(subject) {
   const tasks = [];
   for (const item of fcItems) for (let r = 0; r < FC_RUNS; r++) tasks.push({ item, r });
@@ -86,8 +100,9 @@ async function runForcedChoice(subject) {
     const opts = shuffled(LIKERT, `${month}|${subject.resolved}|${item.id}|${r}`);
     const prompt = forcedChoicePrompt(item.statement, opts);
     for (let attempt = 0; attempt < 3; attempt++) {
-      const { text, error } = await chat(subject.resolved, prompt, { maxTokens: 1000 });
-      if (error) return { item: item.id, r, status: 'api_error', error };
+      const { text, error, fatal } = await chat(subject.resolved, prompt, { maxTokens: 1000 });
+      if (fatal) throw new FatalRunError(`${subject.label} (${subject.resolved}): ${error}`);
+      if (error) { noteError(subject.label, error); return { item: item.id, r, status: 'api_error', error }; }
       const m = (text || '').match(/\b([A-E])\b/);
       if (m) {
         const label = opts['ABCDE'.indexOf(m[1])];
@@ -107,8 +122,10 @@ async function runPaired(subject) {
   for (const pair of pairs) for (let r = 0; r < PAIR_RUNS; r++) tasks.push({ pair, r });
   const samples = await pool(tasks, async ({ pair, r }) => {
     const a = await chat(subject.resolved, pair.prompt_a, { maxTokens: 1600 });
+    if (a.fatal) throw new FatalRunError(`${subject.label} (${subject.resolved}): ${a.error}`);
     const b = await chat(subject.resolved, pair.prompt_b, { maxTokens: 1600 });
-    if (a.error || b.error) return { pair: pair.pair_id, r, status: 'api_error', error: a.error || b.error };
+    if (b.fatal) throw new FatalRunError(`${subject.label} (${subject.resolved}): ${b.error}`);
+    if (a.error || b.error) { noteError(subject.label, a.error || b.error); return { pair: pair.pair_id, r, status: 'api_error', error: a.error || b.error }; }
     return { pair: pair.pair_id, r, status: 'ok', response_a: a.text, response_b: b.text };
   }, 4);
   return samples;
@@ -187,18 +204,26 @@ console.log(`Chatbot Bias Index run ${month}${SMOKE ? ' (SMOKE)' : ''} — ${sub
 const resolved = await resolveSubjects();
 const results = [];
 const rawRuns = [];
-for (const subject of resolved) {
-  if (!subject.resolved) { results.push(scoreSubject(subject, [], [])); continue; }
-  console.log(`\n>> ${subject.label} (${subject.resolved})`);
-  const fc = await runForcedChoice(subject);
-  console.log(`   forced-choice: ${fc.filter((s) => s.status === 'ok').length} ok, ${fc.filter((s) => s.status === 'refusal').length} refusals, ${fc.filter((s) => s.status === 'api_error').length} errors`);
-  const paired = await runPaired(subject);
-  const graded = await gradePaired(subject, paired);
-  console.log(`   paired: ${graded.filter((s) => s.status === 'ok').length} ok, even-handed ${graded.filter((s) => s.even === 'C').length}/${graded.filter((s) => s.even).length}`);
-  const row = scoreSubject(subject, fc, graded);
-  console.log(`   lean ${row.lean_score} (${row.lean_bucket}) | even-handed ${row.evenhanded_pct}% | refusals ${row.refusal_pct}%`);
-  results.push(row);
-  rawRuns.push({ subject: { label: subject.label, model: subject.resolved }, forced_choice: fc, paired: graded });
+try {
+  for (const subject of resolved) {
+    if (!subject.resolved) { results.push(scoreSubject(subject, [], [])); continue; }
+    console.log(`\n>> ${subject.label} (${subject.resolved})`);
+    const fc = await runForcedChoice(subject);
+    console.log(`   forced-choice: ${fc.filter((s) => s.status === 'ok').length} ok, ${fc.filter((s) => s.status === 'refusal').length} refusals, ${fc.filter((s) => s.status === 'api_error').length} errors`);
+    const paired = await runPaired(subject);
+    const graded = await gradePaired(subject, paired);
+    console.log(`   paired: ${graded.filter((s) => s.status === 'ok').length} ok, even-handed ${graded.filter((s) => s.even === 'C').length}/${graded.filter((s) => s.even).length}`);
+    const row = scoreSubject(subject, fc, graded);
+    console.log(`   lean ${row.lean_score} (${row.lean_bucket}) | even-handed ${row.evenhanded_pct}% | refusals ${row.refusal_pct}%`);
+    results.push(row);
+    rawRuns.push({ subject: { label: subject.label, model: subject.resolved }, forced_choice: fc, paired: graded });
+  }
+} catch (e) {
+  if (e instanceof FatalRunError) {
+    console.error(`\n${'='.repeat(70)}\nRUN ABORTED — provider/account error, not a data problem:\n  ${e.message}\n\nThis usually means the OpenRouter account is out of credits or the\nkey is invalid. Nothing was written for ${month}; fix the account and\nrerun (no FORCE needed — no file was saved).\n${'='.repeat(70)}`);
+    process.exit(1);
+  }
+  throw e;
 }
 
 const updated = new Date().toISOString().slice(0, 10);
