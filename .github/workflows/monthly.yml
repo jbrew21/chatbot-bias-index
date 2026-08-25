@@ -26,6 +26,12 @@ jobs:
         run: node src/run.js
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - name: Render the share graphic
+        run: |
+          node src/make-graphic.js
+          sudo apt-get install -y librsvg2-bin >/dev/null 2>&1 || true
+          rsvg-convert -w 2400 data/where-chatbots-lean.svg -o data/where-chatbots-lean.png
+          ls -la data/where-chatbots-lean.png
       - name: Commit results
         run: |
           git config user.name "bias-index-bot"
