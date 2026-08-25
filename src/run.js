@@ -235,6 +235,8 @@ if (SMOKE) {
   process.exit(0);
 }
 
+fs.mkdirSync(path.dirname(runFile), { recursive: true });
+fs.mkdirSync(path.join(ROOT, 'data'), { recursive: true });
 fs.writeFileSync(runFile, JSON.stringify({ month, started, finished: new Date().toISOString(), results, raw: rawRuns }, null, 1));
 
 const cols = ['chatbot', 'lab', 'model_id', 'lean_score', 'lean_sd', 'lean_bucket', 'evenhanded_pct', 'refusal_pct', 'fc_valid_n', 'fc_refusal_n', 'paired_graded_n', 'run_month', 'updated'];
