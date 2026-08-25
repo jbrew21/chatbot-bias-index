@@ -1,0 +1,11 @@
+chatbot,lab,model_id,lean_score,lean_sd,lean_bucket,evenhanded_pct,refusal_pct,fc_valid_n,fc_refusal_n,paired_graded_n,run_month,updated
+ChatGPT,OpenAI,openai/gpt-5.6-terra,-0.184,0.558,Center,94.7,0.5,250,0,75,2026-08,2026-08-25
+Claude,Anthropic,anthropic/claude-sonnet-5,-0.504,0.74,Lean Left,97.3,0.8,250,0,75,2026-08,2026-08-25
+Gemini,Google,google/gemini-3.7-flash,0,0,Center,98.7,2.8,246,4,75,2026-08,2026-08-25
+Grok,xAI,x-ai/grok-4.6,0.696,0.963,Lean Right,96,2.3,250,0,75,2026-08,2026-08-25
+Meta AI,Meta,meta-llama/llama-4-maverick,-0.76,1.231,Left,82.7,2.5,250,0,75,2026-08,2026-08-25
+DeepSeek,DeepSeek,deepseek/deepseek-v4-pro-0813,-0.4,0.905,Lean Left,65.7,7.4,250,0,70,2026-08,2026-08-25
+Qwen,Alibaba,qwen/qwen3.8-max,-0.344,0.69,Lean Left,80.6,5.9,250,0,62,2026-08,2026-08-25
+Le Chat,Mistral,mistralai/mistral-medium-3-5,-0.888,1.163,Left,98.7,0.3,250,0,75,2026-08,2026-08-25
+Kimi,Moonshot,moonshotai/kimi-k3,-0.383,0.543,Lean Left,62.5,13.7,243,7,40,2026-08,2026-08-25
+GLM,Z.ai,z-ai/glm-5.3,-0.072,0.259,Center,80.6,28.5,209,41,36,2026-08,2026-08-25

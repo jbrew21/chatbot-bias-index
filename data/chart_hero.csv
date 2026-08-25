@@ -1,0 +1,11 @@
+Chatbot,Partisan lean score,Rating,Lab
+Le Chat,-0.888,Left,Mistral
+Meta AI,-0.76,Left,Meta
+Claude,-0.504,Lean Left,Anthropic
+DeepSeek,-0.4,Lean Left,DeepSeek
+Kimi,-0.383,Lean Left,Moonshot
+Qwen,-0.344,Lean Left,Alibaba
+ChatGPT,-0.184,Center,OpenAI
+GLM,-0.072,Center,Z.ai
+Gemini,0,Center,Google
+Grok,0.696,Lean Right,xAI
