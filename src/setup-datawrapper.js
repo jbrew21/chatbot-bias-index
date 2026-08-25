@@ -40,7 +40,9 @@ async function dw(method, url, body, raw = false) {
     body: body ? (raw ? body : JSON.stringify(body)) : undefined,
   });
   if (!res.ok) throw new Error(`${method} ${url} -> ${res.status}: ${await res.text()}`);
-  return res.status === 204 ? null : res.json();
+  const text = await res.text();
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 const NOTES_METHOD = 'Method: 50 forced-choice survey statements (ANES/Pew-adapted topics, answer order randomized, asked 5x each) plus 25 left/right paired prompts graded with Anthropic’s open-source even-handedness rubric. Auto-updates monthly. Every prompt, response, and line of code: github.com/jbrew21/chatbot-bias-index';

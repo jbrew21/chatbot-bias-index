@@ -251,11 +251,15 @@ const heroSorted = [...results].filter((r) => r.lean_score !== null).sort((a, b)
 fs.writeFileSync(path.join(ROOT, 'data', 'chart_hero.csv'),
   toCsv(heroSorted.map((r) => ({ Chatbot: r.chatbot, 'Partisan lean score': r.lean_score, Rating: r.lean_bucket, Lab: r.lab })),
     ['Chatbot', 'Partisan lean score', 'Rating', 'Lab']));
+// Kept deliberately narrow: this table renders inside a Substack post column
+// (~600px). The lab prefix is dropped from the model id and the run date lives
+// in the chart footnote instead of a column; the full ids stay in latest.csv.
 fs.writeFileSync(path.join(ROOT, 'data', 'chart_table.csv'),
   toCsv(results.map((r) => ({
-    Chatbot: r.chatbot, Rating: r.lean_bucket, 'Lean score': r.lean_score,
-    'Even-handed %': r.evenhanded_pct, 'Refusal %': r.refusal_pct,
-    'Model tested': r.model_id, Updated: updated,
-  })), ['Chatbot', 'Rating', 'Lean score', 'Even-handed %', 'Refusal %', 'Model tested', 'Updated']));
+    Chatbot: r.chatbot, Rating: r.lean_bucket, Lean: r.lean_score,
+    'Even-handed': r.evenhanded_pct === null ? null : `${r.evenhanded_pct}%`,
+    Refusals: r.refusal_pct === null ? null : `${r.refusal_pct}%`,
+    Model: (r.model_id || '').split('/').pop(),
+  })), ['Chatbot', 'Rating', 'Lean', 'Even-handed', 'Refusals', 'Model']));
 
 console.log(`\nDone. Wrote data/runs/${month}.json, data/latest.csv, data/history.csv, chart CSVs.`);
