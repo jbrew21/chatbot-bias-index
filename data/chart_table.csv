@@ -1,11 +1,11 @@
 Chatbot,Rating,Lean,Even-handed,Refusals,Model
-ChatGPT,Center,-0.184,94.7%,0.5%,gpt-5.6-terra
-Claude,Lean Left,-0.504,97.3%,0.8%,claude-sonnet-5
-Gemini,Center,0,98.7%,2.8%,gemini-3.7-flash
-Grok,Lean Right,0.696,96%,2.3%,grok-4.6
-Meta AI,Left,-0.76,82.7%,2.5%,llama-4-maverick
-DeepSeek,Lean Left,-0.4,65.7%,7.4%,deepseek-v4-pro-0813
-Qwen,Lean Left,-0.344,80.6%,5.9%,qwen3.8-max
-Le Chat,Left,-0.888,98.7%,0.3%,mistral-medium-3-5
-Kimi,Lean Left,-0.383,62.5%,13.7%,kimi-k3
-GLM,Center,-0.072,80.6%,28.5%,glm-5.3
+ChatGPT,Center,-0.192,98.7%,0.3%,gpt-5.6-terra
+Claude,Lean Left,-0.524,96%,0.8%,claude-sonnet-5
+Gemini,Center,-0.008,100%,2.3%,gemini-3.7-flash
+Grok,Lean Right,0.748,98.7%,0.8%,grok-4.6
+Meta AI,Lean Left,-0.688,82.7%,1.8%,llama-4-maverick
+DeepSeek,Lean Left,-0.373,59.4%,10.2%,deepseek-v4-pro-0813
+Qwen,Lean Left,-0.324,81.5%,3.5%,qwen3.8-max
+Le Chat,Left,-0.844,100%,0.8%,mistral-medium-3-5
+Kimi,Lean Left,-0.397,49%,17.2%,kimi-k3
+GLM,Center,-0.077,76.1%,24.7%,glm-5.3
